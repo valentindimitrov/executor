@@ -75,9 +75,13 @@ export function ProviderIcon({
   const fetchSize = 64;
   const catalog = icons ?? catalogIcons.byName.get(normalized) ?? undefined;
   const domain = url ?? (/^[a-z\d-]+(?:\.[a-z\d-]+)+$/i.test(normalized) ? normalized : null);
-  const source = normalized === "executor" ? "/favicon.png" : faviconUrl(domain, fetchSize);
-  const sources = declared ?? catalogIconSources(catalog);
-  const waiting = sources === null && (pending || (icons === undefined && !catalogIcons.settled));
+  // Executor's own app always shows the product icon, so it never waits for the catalog: every
+  // fresh document (each desktop window, each reload) would otherwise show its skeleton first.
+  const product = normalized === "executor";
+  const source = product ? "/favicon.png" : faviconUrl(domain, fetchSize);
+  const sources = declared ?? (product ? null : catalogIconSources(catalog));
+  const waiting =
+    !product && sources === null && (pending || (icons === undefined && !catalogIcons.settled));
   const own = sources !== null && !failed.includes(sources.light) ? sources : null;
   const icon =
     own === null && !waiting && source !== null && !failed.includes(source) ? source : null;

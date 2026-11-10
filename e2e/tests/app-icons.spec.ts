@@ -183,6 +183,27 @@ layer(HostedLive, { excludeTestServices: true })("App icons", (it) => {
         );
         expect(yield* shown("The provider row keeps the app's icon", provider, light)).toBe(light);
         expect(logos).toEqual([]);
+
+        // Executor's own app shows the product icon without waiting for the catalog either: a fresh
+        // apps list, with the catalog read held, shows its card's icon and no loading skeleton.
+        const held = yield* holdQuery(["/api/catalog"], "continue");
+        yield* browser.use("Open the apps list in a new document", (page) =>
+          page.goto(`/org/${actors.organization.slug}/apps`),
+        );
+        yield* held.requested;
+        const executor = (page: Page) =>
+          page.getByRole("link", { name: "Open Executor", exact: true }).locator(".provider-icon");
+        const product = yield* browser.use(
+          "The Executor card shows its icon before the catalog",
+          (page) =>
+            executor(page)
+              .locator('img[src="/favicon.png"]')
+              .waitFor({ state: "visible", timeout: 10_000 })
+              .then(() => executor(page).locator('[data-icon="loading"]').count()),
+        );
+        expect(product).toBe(0);
+        yield* browser.checkpoint("Executor card with its icon before the catalog");
+        yield* held.release;
       }),
     ),
   );
