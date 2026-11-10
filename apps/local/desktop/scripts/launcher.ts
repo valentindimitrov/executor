@@ -4,10 +4,13 @@ import { createHash } from "node:crypto";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import electron from "electron";
+import electronModule from "electron";
 
+// In Node, the electron package exports the path of its binary. Its types describe the API
+// Electron gives its own processes instead.
+const electron = electronModule as unknown as string;
 const root = fileURLToPath(new URL("../../../..", import.meta.url));
-const quote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
+const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 
 export async function resolveLauncher() {
   if (process.platform !== "darwin") return { executable: electron };
@@ -15,15 +18,15 @@ export async function resolveLauncher() {
   const bundle = join(runtime, "Executor Dev.app");
   const executable = join(bundle, "Contents/MacOS/Electron");
   const launcher = join(bundle, "Contents/MacOS/Executor Launcher");
-  const electronMetadata = JSON.parse(
+  const electronMetadata: { readonly version: string } = JSON.parse(
     await readFile(new URL("../node_modules/electron/package.json", import.meta.url), "utf8"),
   );
   const revision = `${electronMetadata.version}:4:${root}`;
-  let previous;
+  let previous: string | undefined;
   try {
     previous = await readFile(join(runtime, "revision"), "utf8");
   } catch (error) {
-    if (error.code !== "ENOENT") throw error;
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
   }
   if (previous !== revision) {
     await mkdir(runtime, { recursive: true });

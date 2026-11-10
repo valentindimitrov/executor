@@ -2,8 +2,8 @@
 import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { buildDesktop } from "./build.mjs";
-import { resolveLauncher } from "./launcher.mjs";
+import { buildDesktop } from "./build.ts";
+import { resolveLauncher } from "./launcher.ts";
 
 const root = fileURLToPath(new URL("../../../..", import.meta.url));
 const desktop = fileURLToPath(new URL("..", import.meta.url));

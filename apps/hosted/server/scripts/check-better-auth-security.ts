@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { betterAuth } from "better-auth";
+import type { User } from "better-auth";
 import { applySetCookies, splitSetCookieHeader } from "better-auth/cookies";
 import { getMigrations } from "better-auth/db/migration";
 import { admin } from "better-auth/plugins/admin";
@@ -32,7 +33,7 @@ const opaqueRedirect = () => {
 
 const provider = github({ clientId: "synthetic-client", clientSecret: "synthetic-secret" });
 const originalFetch = globalThis.fetch;
-const followed = [];
+const followed: string[] = [];
 globalThis.fetch = async (input, init) => {
   const url = input instanceof Request ? input.url : String(input);
   assert.equal(init?.redirect, "manual");
@@ -69,7 +70,7 @@ try {
   globalThis.fetch = originalFetch;
 }
 
-const fetched = [];
+const fetched: string[] = [];
 globalThis.fetch = async (input, init) => {
   assert.equal(init?.redirect, "manual");
   const url = input instanceof Request ? input.url : String(input);
@@ -81,16 +82,13 @@ globalThis.fetch = async (input, init) => {
   return Response.json({ keys: [redirectedJwk] });
 };
 try {
-  assert.equal(
-    (
-      await provider.validateAuthorizationCode({
-        code: "synthetic-code",
-        codeVerifier: "synthetic-verifier",
-        redirectURI: "https://executor.example/api/auth/callback/github",
-      })
-    ).accessToken,
-    "direct-access",
-  );
+  const tokens = await provider.validateAuthorizationCode({
+    code: "synthetic-code",
+    codeVerifier: "synthetic-verifier",
+    redirectURI: "https://executor.example/api/auth/callback/github",
+  });
+  assert.ok(tokens);
+  assert.equal(tokens.accessToken, "direct-access");
   assert.ok(await getGooglePublicKey(redirectedJwk.kid));
   assert.deepEqual(fetched, [
     "https://github.com/login/oauth/access_token",
@@ -99,6 +97,23 @@ try {
 } finally {
   globalThis.fetch = originalFetch;
 }
+
+/** Whether a rejection is Better Auth's API error with this code. */
+const hasErrorCode = (code: string) => (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "body" in error &&
+  typeof error.body === "object" &&
+  error.body !== null &&
+  "code" in error.body &&
+  error.body.code === code;
+
+/** The admin plugin's ban fields, which the internal adapter's `User` type does not declare. */
+const banState = (user: User | null) => ({
+  banned: user !== null && "banned" in user ? user.banned : undefined,
+  banExpires: user !== null && "banExpires" in user ? user.banExpires : undefined,
+  banReason: user !== null && "banReason" in user ? user.banReason : undefined,
+});
 
 const database = new DatabaseSync(":memory:");
 const authOptions = {
@@ -142,7 +157,7 @@ await assert.rejects(
     body: { userId: target.id, data: { id: "replacement-user-id" } },
     headers,
   }),
-  (error) => error?.body?.code === "USER_ID_CANNOT_BE_UPDATED",
+  hasErrorCode("USER_ID_CANNOT_BE_UPDATED"),
 );
 assert.ok(await context.internalAdapter.findUserById(target.id));
 assert.equal(await context.internalAdapter.findUserById("replacement-user-id"), null);
@@ -154,23 +169,17 @@ const updated = await auth.api.adminUpdateUser({
 assert.equal(updated.name, "Updated Security Control");
 
 await context.internalAdapter.updateUser(target.id, { banned: true });
-await assert.rejects(
-  context.internalAdapter.createSession(target.id),
-  (error) => error?.body?.code === "BANNED_USER",
-);
+await assert.rejects(context.internalAdapter.createSession(target.id), hasErrorCode("BANNED_USER"));
 await context.internalAdapter.updateUser(target.id, {
   banned: true,
   banExpires: new Date(Date.now() - 1_000),
   banReason: "expired control",
 });
 assert.equal((await context.internalAdapter.createSession(target.id)).userId, target.id);
-assert.deepEqual(
-  {
-    banned: (await context.internalAdapter.findUserById(target.id))?.banned,
-    banExpires: (await context.internalAdapter.findUserById(target.id))?.banExpires,
-    banReason: (await context.internalAdapter.findUserById(target.id))?.banReason,
-  },
-  { banned: false, banExpires: null, banReason: null },
-);
+assert.deepEqual(banState(await context.internalAdapter.findUserById(target.id)), {
+  banned: false,
+  banExpires: null,
+  banReason: null,
+});
 database.close();
 console.log("Better Auth security boundaries passed.");

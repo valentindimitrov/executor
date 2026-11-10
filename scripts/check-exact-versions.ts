@@ -24,7 +24,7 @@ import { fixtures } from "./check-exact-versions-fixtures.ts";
 type PeerRanges = Readonly<Record<string, Readonly<Record<string, string>>>>;
 
 const peerRanges: PeerRanges = {
-  // `apps` is published to npm by packages/apps/scripts/build.mjs, which copies these peers. Authors
+  // `apps` is published to npm by packages/apps/scripts/build.ts, which copies these peers. Authors
   // bring their own copy; an exact peer would reject every other compatible release.
   "packages/apps/package.json": {
     "@modelcontextprotocol/sdk": "optional peer of `apps/mcp`",

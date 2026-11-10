@@ -1,4 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["*.ts"]
+  "include": ["*.ts"],
+  // The root project excludes this folder, which this project checks on its own.
+  "exclude": []
 }

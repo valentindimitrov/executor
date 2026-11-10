@@ -16,7 +16,7 @@
     "./app-ui": "./src/contracts/app-ui.ts"
   },
   "scripts": {
-    "start": "bun run ../../../packages/apps/scripts/build.mjs && node src/main.ts"
+    "start": "bun run ../../../packages/apps/scripts/build.ts && node src/main.ts"
   },
   "dependencies": {
     "@effect/platform-node": "4.0.1",

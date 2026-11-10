@@ -2,7 +2,7 @@
  * Generate the Executor app's skills and framework reference for Cloud, and the revision of the
  * API the Executor app reads. Generating the API document takes too long for a request's isolate.
  */
-import { generateFrameworkReference } from "../../../../packages/apps/scripts/reference.mjs";
+import { generateFrameworkReference } from "../../../../packages/apps/scripts/reference.ts";
 import { readExecutorSkillDocuments } from "@executor-js/app-templates/executor";
 import { hostedApiRevision } from "@executor-js/hosted-server";
 import { executorCloudApiDocument } from "../src/contracts/api.ts";

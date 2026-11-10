@@ -64,7 +64,7 @@ export const requestBrowserPairing = (electron: ElectronApplication, origin: str
 
 /**
  * Launch the packaged desktop named by EXECUTOR_E2E_DESKTOP_EXECUTABLE, or else this checkout's
- * built development entry (`node apps/local/desktop/scripts/build.mjs`) with its Electron.
+ * built development entry (`node apps/local/desktop/scripts/build.ts`) with its Electron.
  */
 export const launchDesktop = (options: {
   readonly cwd: string;
@@ -82,7 +82,7 @@ export const launchDesktop = (options: {
       const desktop = path.resolve("apps/local/desktop");
       if (!(yield* fs.exists(path.join(desktop, "dist/main.cjs"))))
         return yield* Effect.fail(
-          new Error("Build the desktop entry first: node apps/local/desktop/scripts/build.mjs"),
+          new Error("Build the desktop entry first: node apps/local/desktop/scripts/build.ts"),
         );
       const electron = path.join(desktop, "node_modules/electron");
       const binary = (yield* fs.readFileString(path.join(electron, "path.txt"))).trim();

@@ -53,8 +53,9 @@
     "apps/hosted/self-host/web",
     "apps/marketing",
     "apps/docs",
+    "scripts/releases",
     "**/dist",
     "**/.blume"
   ],
-  "include": ["packages", "apps", "playground", "scripts/oxlint-plugin.ts"]
+  "include": ["packages", "apps", "playground", "scripts"]
 }

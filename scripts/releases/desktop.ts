@@ -82,7 +82,7 @@ const build = Effect.gen(function* () {
       build: Hex.encode(crypto.getRandomValues(new Uint8Array(6))),
     }),
   );
-  yield* run("node", ["apps/local/desktop/scripts/build.mjs"], root);
+  yield* run("node", ["apps/local/desktop/scripts/build.ts"], root);
   // The main entry and the server starter it runs in a utility process.
   for (const entry of ["main.cjs", "starter.cjs"])
     yield* fs.copyFile(path.join(root, "apps/local/desktop/dist", entry), path.join(stage, entry));

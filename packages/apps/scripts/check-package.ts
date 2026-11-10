@@ -9,18 +9,24 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const artifacts = fileURLToPath(new URL("../../../.local/apps-package/", import.meta.url));
 await mkdir(artifacts, { recursive: true });
-const run = (command, args, cwd) =>
+const run = (command: string, args: readonly string[], cwd: string) =>
   execFileSync(command, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-const [packed] = JSON.parse(
-  run("npm", ["pack", "./dist", "--json", "--pack-destination", artifacts], root),
-);
+/** `npm pack --json` describes each packed directory; this packs one. */
+const [packed]: [
+  { readonly filename: string; readonly files: readonly { readonly path: string }[] },
+] = JSON.parse(run("npm", ["pack", "./dist", "--json", "--pack-destination", artifacts], root));
 const archive = join(artifacts, packed.filename);
-const manifest = JSON.parse(await readFile(join(root, "dist/package.json"), "utf8"));
+const manifest: {
+  readonly version: string;
+  readonly publishConfig: { readonly tag: string };
+  readonly exports: Readonly<Record<string, unknown>>;
+} = JSON.parse(await readFile(join(root, "dist/package.json"), "utf8"));
 assert.equal(manifest.publishConfig.tag, "beta");
 assert.match(manifest.version, /^0\.0\.\d+-beta\.\d+$/);
 assert(!JSON.stringify(manifest).includes("workspace:"));
 // The MCP SDK this release is built with is the one quick add pins; the README example names it.
-const source = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+const source: { readonly devDependencies: { readonly "@modelcontextprotocol/sdk": string } } =
+  JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 assert(
   (await readFile(join(root, "README.md"), "utf8")).includes(
     `"@modelcontextprotocol/sdk": "${source.devDependencies["@modelcontextprotocol/sdk"]}"`,

@@ -230,7 +230,7 @@ Linux; set `EXECUTOR_E2E_DESKTOP_EXECUTABLE` to test a packaged app:
 
 ```sh
 bun run apps:build && bun run e2e:apps && bun run telemetry:build && bun run web:build
-node apps/local/desktop/scripts/build.mjs
+node apps/local/desktop/scripts/build.ts
 bunx vitest run --config e2e/desktop-recovery.config.ts
 ```
 

@@ -300,7 +300,7 @@ export const packagedRuntime = (options: { readonly source: string; readonly sta
 
 type StarterFailure = (typeof StarterReport.cases.Failed.Type)["error"];
 
-/** The server starter's entry, which `scripts/build.mjs` bundles beside the main entry. */
+/** The server starter's entry, which `scripts/build.ts` bundles beside the main entry. */
 const starterEntry = "starter.cjs";
 /** How long a starter gets to end the start attempts it began and exit before it is killed. */
 const starterStop = Duration.seconds(5);

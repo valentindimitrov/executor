@@ -1,7 +1,7 @@
 /** Stage a standalone npm package. Workspace dependencies are included in its JS and declarations. */
-import { build } from "esbuild";
+import { build, type OutputFile } from "esbuild";
 import ts from "typescript-5";
-import { generateFrameworkReference } from "./reference.mjs";
+import { generateFrameworkReference } from "./reference.ts";
 import { frameworkProtocol } from "../src/contracts/protocol-version.ts";
 import { readFile, writeFile, mkdir, rm, readdir, copyFile, realpath } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
@@ -12,7 +12,18 @@ const packages = resolve(root, "..");
 const out = join(root, "dist");
 // TypeScript reports source file names with POSIX separators on every platform.
 const packagesPrefix = packages.split("\\").join("/") + "/";
-const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+/** The fields of the workspace manifest this script reads. */
+interface SourceManifest {
+  readonly name: string;
+  readonly version: string;
+  readonly description: string;
+  readonly exports: Readonly<Record<string, string>>;
+  readonly dependencies: Readonly<Record<string, string>>;
+  readonly devDependencies: Readonly<Record<string, string>>;
+  readonly peerDependencies: Readonly<Record<string, string>>;
+  readonly peerDependenciesMeta: Readonly<Record<string, { readonly optional?: boolean }>>;
+}
+const manifest: SourceManifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 const entries = Object.fromEntries(
   Object.entries(manifest.exports)
     .filter(([key]) => !key.endsWith(".json"))
@@ -82,7 +93,7 @@ await writeFile(
 
 // Internal package declarations travel with apps; consumers never need private
 // workspace packages. Relative .js specifiers work with NodeNext and bundlers.
-async function declarations(directory) {
+async function declarations(directory: string): Promise<void> {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const file = join(directory, entry.name);
     if (entry.isDirectory()) {
@@ -95,6 +106,7 @@ async function declarations(directory) {
     ];
     let rewritten = content;
     for (const [, specifier] of specifiers) {
+      if (specifier === undefined) continue;
       const source = await realpath(fileURLToPath(import.meta.resolve(specifier)));
       if (!source.startsWith(packages + sep))
         throw new Error(`Unbundled declaration: ${specifier}`);
@@ -115,11 +127,16 @@ await declarations(join(out, "types"));
 // Worker hosts retain these ready-to-link modules with each app version. They
 // include runtime dependencies and do not execute npm package scripts.
 const snapshotDirectory = join(out, ".framework");
-const moduleName = (file) =>
+const moduleName = (file: OutputFile) =>
   `node_modules/apps/${relative(snapshotDirectory, file.path).split("\\").join("/")}`;
-const snapshot = async (names, external, sourcemap = false) => {
+const entryPoint = (name: string) => {
+  const source = entries[name];
+  if (source === undefined) throw new Error(`Unknown apps entry point: ${name}`);
+  return source;
+};
+const snapshot = async (names: readonly string[], external: string[], sourcemap = false) => {
   const result = await build({
-    entryPoints: Object.fromEntries(names.map((name) => [name, entries[name]])),
+    entryPoints: Object.fromEntries(names.map((name) => [name, entryPoint(name)])),
     outdir: snapshotDirectory,
     bundle: true,
     splitting: true,
@@ -168,10 +185,10 @@ await writeFile(
 // include. A source map changes esbuild's chunk hashes, so a second build makes
 // the maps and each one goes to the module whose code matches apart from chunk
 // names, which keep their length.
-const chunkNames = (text) => text.replace(/-[A-Z0-9]{8}\.js/g, ".js");
+const chunkNames = (text: string) => text.replace(/-[A-Z0-9]{8}\.js/g, ".js");
 const byCode = new Map(Object.entries(server).map(([name, text]) => [chunkNames(text), name]));
 const mapped = await snapshot(serverEntries, [], true);
-const maps = {};
+const maps: Record<string, unknown> = {};
 for (const file of mapped) {
   if (!file.path.endsWith(".map")) continue;
   const code = mapped.find((output) => `${output.path}.map` === file.path);

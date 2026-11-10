@@ -49,13 +49,13 @@ const directory =
   chosen === undefined ? new URL("../packages/apps/protocols/", import.meta.url) : fromCwd(chosen);
 const base = option("--base");
 
-type Json = null | boolean | number | string | Json[] | { readonly [key: string]: Json };
-type Node = { readonly [key: string]: Json };
+type Json = Schema.Json;
+type Node = Schema.JsonObject;
 interface Protocol {
   readonly version: number;
   readonly schemas: Readonly<Record<string, Schema.Top>>;
 }
-const isNode = (value: Json): value is Node =>
+const isNode = (value: Json | undefined): value is Node =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const canonical = (value: Json): string =>
   JSON.stringify(value, (_key, entry: Json) =>

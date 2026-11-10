@@ -14,10 +14,10 @@
  *   bun run scripts/check-changelog-stubs.ts        # fail on missing
  *   bun run scripts/check-changelog-stubs.ts --fix  # create missing stubs
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 
-const repoRoot = resolve(import.meta.dir, "..");
+const repoRoot = resolve(import.meta.dirname, "..");
 
 type Pkg = { name?: string; private?: boolean };
 
@@ -28,8 +28,8 @@ const findWorkspacePackages = (): string[] => {
   const patterns = root.workspaces ?? [];
   const dirs = new Set<string>();
   for (const pattern of patterns) {
-    // Bun.Glob — handles workspace patterns like "packages/*", "playground/demo-apps/*"
-    for (const match of new Bun.Glob(`${pattern}/package.json`).scanSync({ cwd: repoRoot })) {
+    // Workspace patterns such as "packages/*" and "playground/demo-apps/*".
+    for (const match of globSync(`${pattern}/package.json`, { cwd: repoRoot })) {
       dirs.add(dirname(resolve(repoRoot, match)));
     }
   }
