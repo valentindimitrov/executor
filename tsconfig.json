@@ -26,7 +26,7 @@
           "missingEffectError": "error",
           "missingLayerContext": "error",
           "leakingRequirements": "error",
-          // Warning until author and Promise boundaries get typed errors: 313 and 21 sites.
+          // Warning until author and Promise boundaries get typed errors: 523 and 28 sites.
           "anyUnknownInErrorContext": "warning",
           "unknownInEffectCatch": "warning",
           "floatingEffect": "error",
@@ -34,9 +34,9 @@
           "missingReturnYieldStar": "error",
           "globalFetchInEffect": "error",
           "globalConsoleInEffect": "error",
-          // Warning until Effect code reads time through Clock/DateTime: 92 sites.
+          // Warning until Effect code reads time through Clock/DateTime: 177 sites, 95 in e2e.
           "globalDateInEffect": "warning",
-          // Warning until imports move behind platform services or edges: 247 sites, 214 in e2e.
+          // Warning until imports move behind platform services or edges: 534 sites, 437 in e2e.
           "nodeBuiltinImport": "warning",
           // The framework is built on Effect's unstable HTTP, SQL, CLI, AI and reactivity
           // modules by design. Upgrades are reviewed against the release notes instead.

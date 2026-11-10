@@ -14,7 +14,7 @@ import {
 } from "../contracts/source.ts";
 import type { Executor, ResourceLifecycle } from "../contracts/executor.ts";
 import { query, transaction, type Query } from "./database.ts";
-import { storedApp, createApp as storeApp } from "./apps.ts";
+import { storedApp, createApp as storeApp } from "./stored-apps.ts";
 
 /** Product hosts authorize the owner; SDK mutations enforce names and optimistic Git writes. */
 export const makeAppAuthoring = (

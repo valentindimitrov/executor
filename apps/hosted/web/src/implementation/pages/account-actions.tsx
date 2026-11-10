@@ -16,8 +16,8 @@ import { AccountHealthPanel } from "@executor-js/ui/dashboard/account-health";
 import { Button } from "@executor-js/ui/components/button";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@executor-js/ui/components/dropdown-menu";
 import type { AccountAccess } from "@executor-js/hosted-server/resource-access";
+import { accountAtom } from "../../contracts/account-detail.ts";
 import {
-  accountAtom,
   checkAccountAtom,
   disconnectAccountAtom,
   updateAccountAtom,

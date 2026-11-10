@@ -58,8 +58,8 @@ import {
 } from "@executor-js/ui/dashboard/app-overview";
 import { appManagement } from "../../contracts/app-management.ts";
 import { allResults, QueryView, QueryResult, useQuery } from "@executor-js/ui/dashboard/context";
+import { toolsAtom } from "../../contracts/tools.ts";
 import {
-  toolsAtom,
   liveAppAtom,
   acknowledgeApp,
   appError,

@@ -9,7 +9,7 @@ import type { Account } from "../contracts/account.ts";
 import type { ResourceLifecycle } from "../contracts/executor.ts";
 import { StorageError, type AccountConnectionId, type ProviderId } from "../contracts/shared.ts";
 import type { StoredConnectionTarget } from "../contracts/storage.ts";
-import { lockApp, storedApp, storedVersion } from "./apps.ts";
+import { lockApp, storedApp, storedVersion } from "./stored-apps.ts";
 import { query, type Query } from "./database.ts";
 
 /**

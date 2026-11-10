@@ -115,7 +115,6 @@
     "release:version": "bun run changeset:version",
     "release:beta:start": "changeset pre enter beta",
     "release:beta:stop": "changeset pre exit",
-    "lint:changelog-stubs": "bun run scripts/check-changelog-stubs.ts",
     "apps:build": "bun run --cwd packages/apps build",
     "apps:browser-scripts": "node packages/apps/scripts/browser-scripts.ts",
     "executor:intro": "node packages/app-templates/scripts/executor-intro.ts",

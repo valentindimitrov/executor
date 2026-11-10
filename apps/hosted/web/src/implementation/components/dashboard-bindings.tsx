@@ -17,7 +17,7 @@ import { Button } from "@executor-js/ui/components/button";
 import { dashboardAtoms } from "../../contracts/dashboard-bindings.ts";
 import { catalogIconsAtom } from "@executor-js/ui/contracts/icons";
 import { catalogAtom } from "../../contracts/api.ts";
-import { useOrganizationRoute } from "./organization.tsx";
+import { useOrganizationRoute } from "./organization-route.ts";
 import { appError } from "../../contracts/apps.ts";
 import type { HostedError } from "../../contracts/errors.ts";
 

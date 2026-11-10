@@ -1,11 +1,7 @@
-import { hydrated } from "@executor-js/ui/contracts/http";
-import { revalidated } from "@executor-js/ui/contracts/refresh";
 import { acknowledgeLinkChecks, refreshAppLinks } from "./app-accounts.ts";
 import { discoveryTarget, refreshAppDiscovery } from "./app-discovery.ts";
 import { linkedAccountIds } from "@executor-js/ui/contracts/app-accounts";
 import { acknowledgeResourceAccount, resourceDirectoryAtom } from "./resource-access.ts";
-import { protectedQuery } from "./protected-query.ts";
-/** Account queries remain independent across organizations, including OAuth returns. */
 import type { Account, AccountFieldsInput, AccountId, AppId, ProviderId } from "@executor-js/sdk";
 import type { OrganizationReference } from "@executor-js/hosted-server/organization";
 import { Data, Effect, Option } from "effect";
@@ -15,22 +11,9 @@ import type { AccountToName } from "@executor-js/ui/dashboard/name-account";
 import type { AccountMetadataUpdate } from "@executor-js/ui/dashboard/account-description";
 import { HostedClient } from "./api.ts";
 import { inventoryAtom } from "./organization.ts";
-import { toolsAtom } from "./apps.ts";
+import { toolsAtom } from "./tools.ts";
+import { AccountKey, accountAtom } from "./account-detail.ts";
 
-class AccountKey extends Data.Class<{
-  readonly organization: OrganizationReference;
-  readonly account: AccountId;
-}> {}
-const accountQuery = Atom.family((key: AccountKey) =>
-  HostedClient.query("accounts", "get", hydrated({ params: key })).pipe(
-    revalidated,
-    protectedQuery,
-  ),
-);
-export const accountAtom = (key: {
-  readonly organization: OrganizationReference;
-  readonly account: AccountId;
-}) => accountQuery(new AccountKey(key));
 const updateAccount = Atom.family((key: AccountKey) =>
   HostedClient.runtime.fn((payload: AccountMetadataUpdate, get) =>
     Effect.flatMap(HostedClient, (client) => client.accounts.update({ params: key, payload })).pipe(

@@ -30,7 +30,7 @@ import type { ScheduleDispatcher } from "../contracts/scheduler.ts";
 import type { Credentials } from "../contracts/storage.ts";
 import type { ExecutorDatabase } from "./storage.ts";
 import { database, query, transaction } from "./database.ts";
-import { lockApp } from "./apps.ts";
+import { lockApp } from "./stored-apps.ts";
 import { backgroundAccounts } from "./background-accounts.ts";
 import { makeToolApprovals } from "./tool-approvals.ts";
 import type { makeTools } from "./tools.ts";

@@ -10,8 +10,8 @@ import {
   NameAccountModal,
   suggestedAccountName,
 } from "@executor-js/ui/dashboard/name-account";
+import { accountAtom } from "../../contracts/account-detail.ts";
 import {
-  accountAtom,
   accountToNameAtom,
   checkAccountAtom,
   updateAccountAtom,

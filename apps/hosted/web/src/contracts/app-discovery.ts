@@ -6,7 +6,7 @@
 import type { App, AppId, VersionId } from "@executor-js/sdk";
 import type { Atom } from "effect/reactivity";
 import type { OrganizationReference } from "@executor-js/hosted-server/organization";
-import { toolsAtom } from "./apps.ts";
+import { toolsAtom } from "./tools.ts";
 import { refreshSkillDiscovery } from "./app-browser.ts";
 import { refreshResourceDiscovery } from "./resources.ts";
 import { refreshScheduleDiscovery } from "./schedules.ts";

@@ -109,7 +109,8 @@ import {
   StoredVersion,
 } from "../contracts/storage.ts";
 import { makeToolApprovals } from "./tool-approvals.ts";
-import { gotApp, storedVersion } from "./apps.ts";
+import { gotApp } from "./apps.ts";
+import { storedVersion } from "./stored-apps.ts";
 import { database, query, type Query } from "./database.ts";
 import type { OwnerId } from "../contracts/shared.ts";
 import { invocationAccounts } from "./linked-accounts.ts";

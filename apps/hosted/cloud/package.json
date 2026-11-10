@@ -61,6 +61,6 @@
     "@types/pg": "8.15.6",
     "esbuild": "0.28.2",
     "miniflare": "4.20260730.0",
-    "vite-plus": "0.3.3"
+    "vite-plus": "1.5.0"
   }
 }

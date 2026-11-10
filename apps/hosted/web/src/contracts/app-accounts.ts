@@ -22,7 +22,7 @@ import type { OrganizationReference } from "@executor-js/hosted-server/organizat
 import { HostedClient } from "./api.ts";
 import { protectedQuery } from "./protected-query.ts";
 import { refreshResourceDirectory } from "./resource-access.ts";
-import { accountAtom } from "./accounts.ts";
+import { accountAtom } from "./account-detail.ts";
 import { refreshAppDiscovery } from "./app-discovery.ts";
 
 class AppKey extends Data.Class<{

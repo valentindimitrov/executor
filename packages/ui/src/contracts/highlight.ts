@@ -1,12 +1,7 @@
-import { Schema } from "effect";
-/** Syntax highlighting can fail without preventing source inspection. */
-export class HighlightUnavailable extends Schema.TaggedError<HighlightUnavailable>()(
-  "HighlightUnavailable",
-  {},
-) {}
 import { Effect } from "effect";
 import { Atom } from "effect/reactivity";
 import type { HighlighterCore } from "shiki/core";
+import { HighlightUnavailable } from "./highlight-unavailable.ts";
 
 /** One shared Shiki instance for every code view, loaded on first use. */
 export const highlighterAtom = Atom.make(

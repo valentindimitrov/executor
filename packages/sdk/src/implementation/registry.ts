@@ -28,7 +28,7 @@ import {
 } from "../contracts/source.ts";
 import type { AppCopySnapshot } from "../contracts/apps.ts";
 import type { Query } from "./database.ts";
-import { storedApp } from "./apps.ts";
+import { storedApp } from "./stored-apps.ts";
 import { initializeAppRepository } from "./initial-source.ts";
 import type { BlobStorage } from "../contracts/blobs.ts";
 

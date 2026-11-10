@@ -40,7 +40,7 @@ import type { makeOAuth } from "./oauth.ts";
 import { database, query, transaction } from "./database.ts";
 import { snapshot, resolve, resolveRemoval, type InvocationSnapshot } from "./tools.ts";
 import { storedAccount } from "./accounts.ts";
-import { lockApp, storedApp, storedVersion } from "./apps.ts";
+import { lockApp, storedApp, storedVersion } from "./stored-apps.ts";
 import { backgroundAccounts } from "./background-accounts.ts";
 import { setupCompleted } from "./webhook-sources.ts";
 import { accountAuthority } from "./selection.ts";

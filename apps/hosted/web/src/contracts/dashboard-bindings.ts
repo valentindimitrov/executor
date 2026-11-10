@@ -7,7 +7,8 @@ import type { OrganizationReference } from "@executor-js/hosted-server/organizat
 import { providerDisplayUrl, type InstallApp } from "@executor-js/ui/contracts/dashboard";
 import { HostedClient, catalogAtom } from "./api.ts";
 import { inventoryAtom } from "./organization.ts";
-import { acknowledgeApp, toolsAtom } from "./apps.ts";
+import { acknowledgeApp } from "./apps.ts";
+import { toolsAtom } from "./tools.ts";
 
 /** A separate set of atom identities per organization prevents cross-organization cache reuse. */
 export const dashboardAtoms = Atom.family((organization: OrganizationReference) => ({

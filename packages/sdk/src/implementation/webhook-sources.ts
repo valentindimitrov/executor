@@ -29,7 +29,7 @@ import {
   type Json,
 } from "../contracts/shared.ts";
 import { query, transaction, type Query } from "./database.ts";
-import { lockApp, storedApp } from "./apps.ts";
+import { lockApp, storedApp } from "./stored-apps.ts";
 import { storedAccount } from "./accounts.ts";
 import { backgroundAccounts } from "./background-accounts.ts";
 import { snapshot, type InvocationSnapshot } from "./tools.ts";

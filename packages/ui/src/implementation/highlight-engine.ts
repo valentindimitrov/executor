@@ -1,4 +1,4 @@
-import { HighlightUnavailable } from "../contracts/highlight.ts";
+import { HighlightUnavailable } from "../contracts/highlight-unavailable.ts";
 import { Effect } from "effect";
 import { createHighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";

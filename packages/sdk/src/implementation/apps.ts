@@ -4,27 +4,24 @@ import { AppWebhooksActive } from "../contracts/apps.ts";
 import { appSlug } from "../contracts/app-slug.ts";
 /** Durable configured apps and immutable versions, sharing one execution path. */
 import { Clock, type Crypto, Effect, Schema, Struct } from "effect";
-import { SqlError } from "effect/sql";
 import {
   App,
   DeployedApp,
   AppNameTaken,
   AppNotFound,
-  AppNotDeployed,
-  AppSlugTaken,
   AppRequirements,
   RetainedVersion,
   type AppCopyOrigin,
   type AppCopySnapshot,
 } from "../contracts/apps.ts";
 import { makeAppAuthoring } from "./app-authoring.ts";
+import { appWriteFailure, createApp, lockApp, storedApp, storedVersion } from "./stored-apps.ts";
 import {
   AppVersionChanged,
   Version,
   VersionBuildFailed,
   BuildMemoryExceeded,
   BuildUnanswered,
-  VersionNotFound,
   VersionSummary,
   SourceFiles,
 } from "../contracts/version.ts";
@@ -43,7 +40,7 @@ import {
   StorageError,
   JsonObject,
 } from "../contracts/shared.ts";
-import { StoredApp, StoredVersion } from "../contracts/storage.ts";
+import { StoredApp } from "../contracts/storage.ts";
 import { query, transaction, type Query } from "./database.ts";
 import { removeToolSearch } from "./tool-search-store.ts";
 import { identifyProvider } from "./provider.ts";
@@ -98,61 +95,6 @@ const versionBuildFailed = (owner: OwnerId, name: string, error: RuntimeBuildFai
     message: `App build failed at the ${stage} stage${where}${detail === undefined ? "." : `: ${detail}`}`,
   });
 };
-
-export const storedApp = (db: Query, input: Parameters<Executor["apps"]["get"]>[0]) =>
-  Effect.gen(function* () {
-    const row = yield* query(() =>
-      db.findFirst("apps", {
-        where: (b) =>
-          b.and(
-            b("id", "=", input.app),
-            input.owner === undefined ? true : b("owner", "=", input.owner),
-          ),
-      }),
-    );
-    if (row === null) return yield* Effect.fail(new AppNotFound({ app: input.app }));
-    return yield* Schema.decodeUnknownEffect(StoredApp)(row).pipe(
-      Effect.mapError(() => new StorageError()),
-    );
-  });
-
-/** Lock the app before changing selections or version; only write its immutable code identity, then reread. */
-export const lockApp = (db: Query, input: Parameters<Executor["apps"]["get"]>[0]) =>
-  Effect.gen(function* () {
-    const app = yield* storedApp(db, input);
-    yield* query(() =>
-      db.updateMany("apps", {
-        where: (b) => b.and(b("id", "=", app.id), b("code", "=", app.code)),
-        set: { code: app.code },
-      }),
-    );
-    return yield* storedApp(db, input);
-  });
-
-/** Read a version from this app's lineage, including its retained source and requirements. */
-export const storedVersion = (
-  db: Query,
-  app: Pick<StoredApp, "id" | "code" | "activeVersion">,
-  version: VersionId | null = app.activeVersion,
-  versionOwner?: OwnerId,
-) =>
-  Effect.gen(function* () {
-    if (version === null) return yield* new AppNotDeployed({ app: app.id });
-    const row = yield* query(() =>
-      db.findFirst("deployments", {
-        where: (b) =>
-          b.and(
-            b("id", "=", version),
-            b("code", "=", app.code),
-            versionOwner === undefined ? true : b("owner", "=", versionOwner),
-          ),
-      }),
-    );
-    if (row === null) return yield* Effect.fail(new VersionNotFound({ app: app.id, version }));
-    return yield* Schema.decodeUnknownEffect(StoredVersion)(row).pipe(
-      Effect.mapError(() => new StorageError()),
-    );
-  });
 
 const StoredVersionRequirements = Schema.Struct({ requirements: AppRequirements });
 
@@ -220,17 +162,6 @@ function project(db: Query, app: StoredApp) {
   );
 }
 
-/** Translate atomic name/address constraints without hiding unrelated database failures. */
-const appWriteFailure = (app: Pick<StoredApp, "owner" | "name" | "slug">) => (error: unknown) => {
-  if (SqlError.isSqlError(error) && Schema.is(SqlError.UniqueViolation)(error.reason)) {
-    if (error.reason.constraint === "executor_apps_owner_name")
-      return new AppNameTaken({ owner: app.owner, name: app.name });
-    if (error.reason.constraint === "executor_apps_owner_slug")
-      return new AppSlugTaken({ owner: app.owner, slug: app.slug });
-  }
-  return new StorageError();
-};
-/** Insert app identity while preserving name and derived-slug uniqueness errors. */
 /**
  * A new active version re-registers the app's managed webhooks; removed sources keep removing. It is
  * new intent, so each source runs again with no failures counted.
@@ -242,14 +173,6 @@ const webhookSourcesPending = (db: Query, app: AppId) =>
       set: { status: "pending", failure: null, retries: 0 },
     }),
   );
-
-export const createApp = (db: Query, app: StoredApp) => {
-  // Storage keeps the column's former name.
-  const { activeVersion, ...row } = app;
-  return db
-    .create("apps", { ...row, activeDeployment: activeVersion })
-    .pipe(Effect.mapError(appWriteFailure(app)));
-};
 
 /** Bind app operations; all network/build work finishes before any database transaction. */
 export const makeApps = (

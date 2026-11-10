@@ -32,7 +32,7 @@ import type { Executor } from "../contracts/executor.ts";
 import type { makeOAuth } from "./oauth.ts";
 import { database, query, transaction } from "./database.ts";
 import { storedAccount } from "./accounts.ts";
-import { storedApp, storedVersion } from "./apps.ts";
+import { storedApp, storedVersion } from "./stored-apps.ts";
 import { resolve, snapshot, type InvocationSnapshot } from "./tools.ts";
 import { invocationScope, scopedSelection } from "./selection.ts";
 import type { Declarations } from "./declarations.ts";

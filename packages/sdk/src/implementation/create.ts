@@ -11,7 +11,7 @@ import { remoteRegistry } from "./remote-registry.ts";
 import { aesGcmCredentials } from "./credentials.ts";
 import { hostedExecutorOrigin } from "../contracts/registry.ts";
 import { defaultToolListingPolicy } from "../contracts/declarations.ts";
-import { storedApp } from "./apps.ts";
+import { storedApp } from "./stored-apps.ts";
 import { initializeAppRepository, recoverAppRepositories } from "./initial-source.ts";
 import { makeWorkflowRuns } from "./workflows.ts";
 /** Compose native operations once for in-process and HTTP callers. */

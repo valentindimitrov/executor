@@ -14,7 +14,7 @@ import {
   type AppId,
   type VersionId,
 } from "../contracts/shared.ts";
-import { storedApp, storedVersion } from "./apps.ts";
+import { storedApp, storedVersion } from "./stored-apps.ts";
 import { query, type Query } from "./database.ts";
 import { plainAccount } from "./linked-accounts.ts";
 

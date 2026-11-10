@@ -44,6 +44,7 @@ import { Button } from "@executor-js/ui/components/button";
 import { Spinner } from "@executor-js/ui/components/spinner";
 
 import { HostedDashboard } from "./dashboard-bindings.tsx";
+import { OrganizationRouteContext, useOrganizationRoute } from "./organization-route.ts";
 import {
   OrganizationForm,
   OrganizationFormError,
@@ -54,6 +55,8 @@ import {
 import { OrganizationSwitcherSkeleton } from "./dashboard-frame.tsx";
 import { HostedEntry, DashboardEntryPending, OrganizationLookupError } from "./entry.tsx";
 
+export { useOrganizationRoute };
+
 const OrganizationContext = createContext<
   | (OrganizationAccess & {
       readonly name: string;
@@ -63,24 +66,6 @@ const OrganizationContext = createContext<
     })
   | null
 >(null);
-const OrganizationRouteContext = createContext<{
-  readonly organization: OrganizationReference;
-  readonly slug: string;
-  readonly role: OrganizationAccess["role"] | undefined;
-  readonly id: OrganizationId | undefined;
-  readonly name: string | undefined;
-  readonly unavailable: boolean;
-  /** Whether the page may render; see `useGuardedPreload`. */
-  readonly released: boolean;
-  readonly metadataFailed: boolean;
-  readonly retry: () => void;
-} | null>(null);
-/** The URL target is immediately usable by page requests, independently of sidebar metadata. */
-export function useOrganizationRoute() {
-  const value = useContext(OrganizationRouteContext);
-  if (value === null) throw new Error("Organization route context is missing");
-  return value;
-}
 /**
  * Show only content errors; keep the dashboard and navigation mounted. A refusal shows itself;
  * until access succeeds, a server render shows `pending` instead of the page.

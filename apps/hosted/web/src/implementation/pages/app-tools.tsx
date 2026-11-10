@@ -16,13 +16,8 @@ import type { RequirementAccounts } from "@executor-js/ui/contracts/app-accounts
 import { ErrorNotice } from "@executor-js/ui/dashboard/error-notice";
 import { Empty } from "@executor-js/ui/dashboard/common";
 import { AppSectionHeader, AppSectionTitle } from "@executor-js/ui/dashboard/app-section-header";
-import {
-  appError,
-  callToolAtom,
-  toolDetailAtom,
-  toolCatalogAtom,
-  toolRunApprovalAtoms,
-} from "../../contracts/apps.ts";
+import { appError, callToolAtom, toolRunApprovalAtoms } from "../../contracts/apps.ts";
+import { toolDetailAtom, toolCatalogAtom } from "../../contracts/tools.ts";
 import type { HostedError } from "../../contracts/errors.ts";
 import { useOrganizationRoute } from "../components/organization.tsx";
 

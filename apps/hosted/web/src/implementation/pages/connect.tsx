@@ -13,7 +13,7 @@ import { ConnectionToolPicker } from "@executor-js/ui/dashboard/connection-tool-
 import { type OrganizationPageReads, useOrganizationRoute } from "../components/organization.tsx";
 import { HostedFailure } from "../components/dashboard-bindings.tsx";
 import { resourceInventoryAtom } from "../../contracts/resource-access.ts";
-import { connectionToolListAtom } from "../../contracts/apps.ts";
+import { connectionToolListAtom } from "../../contracts/tools.ts";
 import {
   mcpAgentsAtom,
   mcpConnectionsAtom,

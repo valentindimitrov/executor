@@ -1,4 +1,4 @@
-import { storedApp, storedVersion } from "./apps.ts";
+import { storedApp, storedVersion } from "./stored-apps.ts";
 import { snapshot as invocation } from "./tools.ts";
 import { appProviderFailure } from "./provider-error.ts";
 import { AppSkills, ProviderError } from "apps/contracts";
