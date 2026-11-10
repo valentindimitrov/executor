@@ -42,8 +42,6 @@
   },
   "devDependencies": {
     "@effect/platform-node": "4.0.1",
-    "@effect/sql-mssql": "4.0.1",
-    "@effect/sql-mysql2": "4.0.1",
     "@effect/sql-pg": "4.0.1",
     "@effect/sql-pglite": "4.0.1",
     "@effect/sql-sqlite-node": "4.0.1"
