@@ -533,6 +533,8 @@ deploy.
 
 The CLI also provides `executor apps source`, `executor apps commit`,
 `executor apps deploy --commit <sha>` and `executor apps deploy --files <dir>`.
+`executor apps tools --app <app-id>` lists a deployed app's tools with `readOnly`
+for each, so a script can check which ones are writes.
 Deploying reads the chosen commit and leaves the Git branch unchanged. Ordinary
 Git pushes save source without deploying it.
 

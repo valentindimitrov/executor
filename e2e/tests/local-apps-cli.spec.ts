@@ -29,6 +29,19 @@ const Document = Schema.fromJsonString(
   Schema.Struct({ content: Schema.String, files: Schema.Array(Schema.String) }),
 );
 const Created = Schema.fromJsonString(Schema.Struct({ id: Schema.String }));
+/** An app's tool index: names and kinds. `inputSchema` is kept so a listing with schemas fails. */
+const Tools = Schema.fromJsonString(
+  Schema.Struct({
+    items: Schema.Array(
+      Schema.Struct({
+        name: Schema.String,
+        readOnly: Schema.optionalKey(Schema.Boolean),
+        kindConfirmed: Schema.optionalKey(Schema.Boolean),
+        inputSchema: Schema.optionalKey(Schema.Unknown),
+      }),
+    ),
+  }),
+);
 const Release = Schema.fromJsonString(Schema.Struct({ version: Schema.String }));
 /** A failed command's stdout when a program reads it: the error as the CLI describes it. */
 const Failure = Schema.fromJsonString(
@@ -422,6 +435,29 @@ layer(TestLive, { excludeTestServices: true })("Local apps CLI", (it) => {
           true,
         );
         expect(deployed.code, deployed.stderr).toBe(0);
+
+        // Its tools as the host evaluates them, by ID or slug, without schemas: the query is a
+        // read the app confirmed.
+        const { slug } = yield* Schema.decodeUnknownEffect(
+          Schema.fromJsonString(Schema.Struct({ slug: Schema.String })),
+        )(created.stdout);
+        for (const ref of [app.id, slug]) {
+          const listedTools = yield* run(["tools", "--host", origin, "--app", ref], true);
+          yield* evidence.json(`tools-${ref === app.id ? "id" : "slug"}.json`, listedTools);
+          expect(listedTools.code, listedTools.stderr).toBe(0);
+          expect((yield* Schema.decodeUnknownEffect(Tools)(listedTools.stdout)).items).toEqual([
+            { name: "hello", readOnly: true, kindConfirmed: true },
+          ]);
+        }
+        // The Executor app's management tools include writes, which are not read-only.
+        const executorTools = yield* run(["tools", "--host", origin, "--app", "executor"], true);
+        expect(executorTools.code, executorTools.stderr).toBe(0);
+        const managed = (yield* Schema.decodeUnknownEffect(Tools)(executorTools.stdout)).items;
+        expect(managed.find((tool) => tool.name === "apps.list")?.readOnly).toBe(true);
+        expect(managed.find((tool) => tool.name === "apps.remove")?.readOnly).not.toBe(true);
+        const unknownTools = yield* run(["tools", "--host", origin, "--app", "missing-app"], true);
+        expect(unknownTools.code).toBe(1);
+        expect(unknownTools.stderr).toContain("No visible app has slug or ID missing-app.");
 
         // The host-managed Executor app is generated with the same pinned release.
         const inventory = yield* session.send("GET", "/v1/apps", undefined, {

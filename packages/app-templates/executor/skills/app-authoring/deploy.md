@@ -143,6 +143,10 @@ save fails with `SourcePathConflict` and saves nothing.
 between, the commit is rejected. Read the source again and reconcile before
 retrying. A commit alone does not change the running app.
 
+After a deploy, `executor apps tools --app <app-id>` lists the tools the host now
+serves, without schemas. A tool without `readOnly: true` is a write: check that each
+write has the approval you meant, and that no write turned into a read through `kinds`.
+
 On hosted Executor you can also use Git. `executor apps git --app <app-id>`
 prints the clone URL. Clone with the credential helper configured in the clone, so later
 pushes and fetches use it too:

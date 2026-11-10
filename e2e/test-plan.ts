@@ -9150,7 +9150,7 @@ export const scenarios = plan({
   localAppsCliRelease: {
     file: "local-apps-cli.spec.ts",
     title:
-      "apps CLI prints the host's apps release, requires --files, and deploys the documented two-file app; the local Executor app pins the same release",
+      "apps CLI prints the host's apps release, requires --files, deploys the documented two-file app and lists its tools with their kinds; the local Executor app pins the same release",
     targets: {
       local: scheduled,
       "self-host": na("The CLI's hosted path needs a browser OAuth login; local uses an API key."),

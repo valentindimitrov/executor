@@ -20,7 +20,7 @@ import {
   HttpClientRequest,
   type HttpClientResponse,
 } from "effect/http";
-import { HttpApiClient } from "effect/http-api";
+import { HttpApi, HttpApiClient, HttpApiEndpoint, HttpApiGroup } from "effect/http-api";
 import { isPlatformError } from "effect/PlatformError";
 import {
   AppId,
@@ -33,6 +33,7 @@ import {
   SourceCommit,
   SourceFilePath,
   SourceError,
+  ToolIndex,
   inlineBytes,
   PackageName,
   hostedExecutorOrigin,
@@ -80,6 +81,10 @@ import {
 
 /** Skill lookups report the host's failure tag or the missing option; never a response body. */
 class SkillLookupFailed extends Schema.TaggedError<SkillLookupFailed>()("SkillLookupFailed", {
+  reason: Schema.String,
+}) {}
+/** A tool listing names an app the host does not show. */
+class ToolLookupFailed extends Schema.TaggedError<ToolLookupFailed>()("ToolLookupFailed", {
   reason: Schema.String,
 }) {}
 const host = Flag.String("host").pipe(
@@ -247,13 +252,26 @@ const localManagementApi = appManagementApi("/api", AppAccess);
 const hostedManagementApi = appManagementApi("/api/organizations/:organization", AppAccess);
 const localFrameworkApi = frameworkApi("/api", AppAccess);
 const hostedFrameworkApi = frameworkApi("/api/organizations/:organization", AppAccess);
+/**
+ * Hosted serves an app's tool index under its organization and app; local serves the SDK route,
+ * /v1/tools/index?app=, which the SDK contract already describes.
+ */
+const hostedToolsApi = HttpApi.make("hosted-tools").add(
+  HttpApiGroup.make("tools").add(
+    HttpApiEndpoint.get("index", "/api/organizations/:organization/apps/:app/tools/index", {
+      params: { organization: Schema.String, app: AppId },
+      success: ToolIndex,
+    }),
+  ),
+);
 /** Both hosts serve one app management contract; hosted routes add the organization. */
 type Management = HttpApiClient.ForApi<typeof localManagementApi>["appManagement"];
 type Framework = HttpApiClient.ForApi<typeof localFrameworkApi>["framework"];
 /**
  * Typed clients for one host. App management uses its shared contract. Skill reads use the SDK
  * routes: local serves them under /v1, and hosted serves the same endpoints and
- * schemas under its organization prefix.
+ * schemas under its organization prefix. Tool indexes use the SDK route on local and the app's
+ * route on hosted; both answer the SDK's ToolIndex.
  */
 const connect = (host: Host, organization: Option.Option<string>) =>
   Effect.gen(function* () {
@@ -265,11 +283,14 @@ const connect = (host: Host, organization: Option.Option<string>) =>
       const framework: Framework = (yield* HttpApiClient.makeWith(localFrameworkApi, {
         httpClient,
       })).framework;
+      const tools = yield* HttpApiClient.group(ExecutorApi, { group: "tools", httpClient });
       return {
         management,
         framework,
         tenant: {},
         skills: yield* HttpApiClient.group(ExecutorApi, { group: "skills", httpClient }),
+        toolIndex: (app: AppId) =>
+          tools.index({ query: { app }, responseMode: "decoded-and-response" }),
       };
     }
     const prefix = `/api/organizations/${encodeURIComponent(target.organization)}`;
@@ -280,11 +301,15 @@ const connect = (host: Host, organization: Option.Option<string>) =>
     const management: Management = client.appManagement;
     const framework: Framework = (yield* HttpApiClient.makeWith(hostedFrameworkApi, { httpClient }))
       .framework;
+    const tools = (yield* HttpApiClient.makeWith(hostedToolsApi, { httpClient })).tools;
+    const tenant = { organization: target.organization };
     return {
       management,
       framework,
-      tenant: { organization: target.organization },
+      tenant,
       skills: yield* HttpApiClient.group(ExecutorApi, { group: "skills", httpClient: sdkClient }),
+      toolIndex: (app: AppId) =>
+        tools.index({ params: { ...tenant, app }, responseMode: "decoded-and-response" }),
     };
   });
 /** Run one app management operation; contract errors stay typed for command diagnostics. */
@@ -418,6 +443,26 @@ const readSkills = (args: {
       }),
     ).pipe(Effect.flatMap(print(AppSkillDocument)));
   });
+
+/**
+ * One deployed app's live tools without schemas, as the host evaluates them with the accounts you
+ * linked: each tool's name, description, readOnly, kindConfirmed and annotations.
+ */
+const listTools = (args: {
+  readonly host: Host;
+  readonly organization: Option.Option<string>;
+  readonly app: string;
+}) =>
+  Effect.gen(function* () {
+    const { management, tenant, toolIndex } = yield* connect(args.host, args.organization);
+    const apps = yield* management.list({ params: tenant });
+    const selected = apps.find((app) => app.slug === args.app || app.id === args.app);
+    if (selected === undefined)
+      return yield* new ToolLookupFailed({
+        reason: `No visible app has slug or ID ${args.app}. Run executor apps list to see apps.`,
+      });
+    return yield* toolIndex(selected.id).pipe(Effect.flatMap(printResponse));
+  }).pipe(Effect.catchIf(isTransportFailure, hostFailure));
 
 const notSignedIn = `Not signed in to this host. For hosted Executor, run executor apps login --host ${hostedExecutorOrigin} and pass the same --host to each command, or set EXECUTOR_HOST. Without --host or EXECUTOR_HOST, commands use the local background Executor; for a local server at --host, set EXECUTOR_API_KEY to its API key.`;
 /** What each sign-in failure means and what to do next. */
@@ -581,6 +626,8 @@ export const describeAppFailure = (error: unknown): AppCommandFailure | undefine
         };
   if (Schema.is(SkillLookupFailed)(error))
     return { code: "SkillLookupFailed", message: error.reason };
+  if (Schema.is(ToolLookupFailed)(error))
+    return { code: "ToolLookupFailed", message: error.reason };
   if (Schema.is(LoginFailed)(error))
     return {
       code: "LoginFailed",
@@ -1108,6 +1155,21 @@ export const appsCommand = <E = never, R = never>(
           "List or read app skills served by the host. Start with --app executor --name executor, then read its app-authoring skill before writing an app",
         ),
         Command.withHandler((args) => withHost(args.host, (host) => readSkills({ ...args, host }))),
+      ),
+      Command.make("tools", {
+        ...connection,
+        app: Flag.String("app").pipe(Flag.withDescription("App slug or ID")),
+      }).pipe(
+        Command.withDescription(
+          "List a deployed app's tools as the host evaluates them, without schemas: each tool's name, description, readOnly, kindConfirmed and annotations, and the accounts the listing used. Tools that need an account appear once one is linked",
+        ),
+        Command.withExamples([
+          {
+            command: "executor apps tools --app github",
+            description: "Check which of an app's tools are reads and which are writes",
+          },
+        ]),
+        Command.withHandler((args) => withHost(args.host, (host) => listTools({ ...args, host }))),
       ),
       Command.make("credential", {
         action: Argument.Literals("action", ["get", "store", "erase"]).pipe(
